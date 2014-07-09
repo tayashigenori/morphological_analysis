@@ -1,160 +1,136 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import re
+
+def is_consonant(s):
+    # TODO
+    s = re.sub("\+", "", s)
+    s = re.sub("-", "", s)
+    if s[-1] in ('a', 'i', 'u', 'e', 'o'):
+        return False
+    else:
+        return True
 
 class VerbCore(str):
-    SUFFIX_GLUE = "a"
-    #
     SEPARATOR = "+"
     def __init__(self,
-                 surface_form, #「溶かす」なら tok
+                 core, #「溶かす」なら tok
                  ):
-        self._sf = surface_form
+        self._surface_form = core
+        self._suffix_glue = "a"
         return
 
-    def is_consonant(self,):
-        if self._sf[-1] in ('a', 'i', 'u', 'e', 'o'):
-            return False
-        else:
-            return True
-
     def __add__(self, suffix):
-        if isinstance(suffix, (VerbSuffixTransitiveSV, VerbSuffixTransitiveEV,
-                               VerbSuffixIntransitiveRV, VerbSuffixIntransitiveEV)):
-            self._sf = self._sf + suffix.PREFIX_GLUE
-
-        if self.is_consonant() == True:
-            self._sf = self._sf + self.SUFFIX_GLUE
-
-        self._sf = self._sf + self.SEPARATOR + suffix._sf
-        return self._sf
-
-    #def __str__(self,):
-    #    return self._sf
+        if isinstance(suffix, VerbCoreSuffix):
+            res = self._surface_form + suffix._prefix_glue
+            if is_consonant(res) == True:
+                res += self._suffix_glue
+            return res + self.SEPARATOR + suffix._surface_form
+        else:
+            raise ValueError("Unexpected type %s of suffix %s\n"
+                             %(type(suffix), suffix))
 
 class VerbStem(str):
     SUFFIX_GLUE = "e"
     #
     SEPARATOR = "-"
     def __init__(self,
-                 surface_form, #「溶かす」なら tokas
+                 stem, #「溶かす」なら tokas
                  ):
-        self._sf = surface_form
-        return
-
-    def is_consonant(self,):
-        if self._sf[-1] in ('a', 'i', 'u', 'e', 'o'):
-            return False
-        else:
-            return True
-
-    def __add__(self, suffix):
-        if self.is_consonant() == True:
-            self._sf = self._sf + self.SEPARATOR + suffix._sf
-        else:
-            self._sf = self._sf + self.SEPARATOR + suffix.PREFIX_GLUE + suffix._sf
-        return self._sf
-
-    #def __str__(self,):
-    #    return self._sf
-
-class Verb:
-    def __init__(self,
-                 surface_form, #「溶かす」なら tokas
-                 ):
-        self._sf = surface_form
+        self._surface_form = stem
         return
 
     def __add__(self, suffix):
-        if self.is_consonant() == True:
-            self._sf = self._sf + suffix._sf
+        res = self._surface_form + self.SEPARATOR
+        if is_consonant(self._surface_form) == True:
+            return res + suffix._surface_form
         else:
-            self._sf = self._sf + suffix._pg + suffix._sf
-        return
+            return res + suffix._prefix_glue + suffix._surface_form
 
-    def is_consonant(self,):
-        if self._sf[-1] in ('a', 'i', 'u', 'e', 'o'):
-            return False
-        else:
-            return True
+class Verb(str):
+    def init_with_core(self,
+                       core,
+                       core_suffix):
+        self._core = VerbCore(core)
+        self._stem = VerbStem(core + core_suffix)
+        self._surface_form = VerbStem(core + core_suffix)
+        return self
+    def init_with_stem(self,
+                       stem):
+        self._core = VerbCore(False)
+        self._stem = VerbStem(stem)
+        self._surface_form = VerbStem(stem)
+        return self
 
-    #def __str__(self,):
-    #    return self._sf
+    def __add__(self, suffix):
+        return self._surface_form + suffix
 
+"""
+VerbSuffix
+"""
 class VerbSuffix:
-    PREFIX_GLUE = ''
-    SURFACE_FORM = ''
-    def __init__(self,
-                 ):
-        self._sf = self.SURFACE_FORM
+    def __init__(self,):
         return
-
-    def is_consonant(self,):
-        if self._sf[-1] in ('a', 'i', 'u', 'e', 'o'):
-            return False
-        else:
-            return True
-
-    #def __str__(self,):
-    #    return self._sf
 
 class VerbSuffixShuushikei(VerbSuffix):
-    PREFIX_GLUE = 'r'
-    SURFACE_FORM = 'u'
+    def __init__(self,):
+        self._prefix_glue = 'r'
+        self._surface_form = 'u'
+        return
 
-class VerbSuffixTransitive(VerbSuffix):
-    # override me
-    PREFIX_GLUE = ''
-    SURFACE_FORM = ''
+"""
+VerbCoreSuffix
+"""
+class VerbCoreSuffix:
+    def __init__(self,):
+        return
 
-class VerbSuffixTransitiveSV(VerbSuffixTransitive):
-    PREFIX_GLUE = 'e'
-    SURFACE_FORM = 's'
+class VerbCoreSuffixTransitive(VerbCoreSuffix):
+    def __init__(self,
+                 vowel = False,
+                 s = True,
+                 ):
+        if vowel:
+            self._prefix_glue = 'e'
+        else:
+            self._prefix_glue = ''
+        if s:
+            self._surface_form = 's'
+        else:
+            self._surface_form = ''
+        return
 
-class VerbSuffixTransitiveEV(VerbSuffixTransitive):
-    PREFIX_GLUE = 'e'
-    SURFACE_FORM = ''
-
-class VerbSuffixTransitiveSC(VerbSuffixTransitive):
-    PREFIX_GLUE = ''
-    SURFACE_FORM = 's'
-
-class VerbSuffixTransitiveEC(VerbSuffixTransitive):
-    PREFIX_GLUE = ''
-    SURFACE_FORM = ''
-
-class VerbSuffixIntransitive(VerbSuffix):
-    # override me
-    PREFIX_GLUE = ''
-    SURFACE_FORM = ''
-
-class VerbSuffixIntransitiveRV(VerbSuffixIntransitive):
-    PREFIX_GLUE = 'e'
-    SURFACE_FORM = 'r'
-
-class VerbSuffixIntransitiveEV(VerbSuffixIntransitive):
-    PREFIX_GLUE = 'e'
-    SURFACE_FORM = ''
-
-class VerbSuffixIntransitiveRC(VerbSuffixIntransitive):
-    PREFIX_GLUE = ''
-    SURFACE_FORM = 'r'
-
-class VerbSuffixIntransitiveEC(VerbSuffixIntransitive):
-    PREFIX_GLUE = ''
-    SURFACE_FORM = ''
+class VerbCoreSuffixIntransitive(VerbCoreSuffix):
+    def __init__(self,
+                 vowel = False,
+                 r = True,
+                 ):
+        if vowel:
+            self._prefix_glue = 'e'
+        else:
+            self._prefix_glue = ''
+        if r:
+            self._surface_form = 'r'
+        else:
+            self._surface_form = ''
+        return
 
 def test():
-    # initialize with VerbStem
-    print VerbStem("toke") + VerbSuffixShuushikei()
-    print VerbStem("tokas") + VerbSuffixShuushikei()
-    # initialize with VerbCore + VerbSuffixTransitive / VerbSuffixIntransitive
-    print VerbCore("tok") + VerbSuffixTransitiveSC()
-    print VerbCore("tok") + VerbSuffixIntransitiveEV()
-    #print VerbCore("tok") + VerbSuffixTransitiveSC() + VerbSuffixShuushikei()
-    #print VerbCore("tok") + VerbSuffixIntransitiveRV() + VerbSuffixShuushikei()
-
-
+    # initialize with Stem
+    print Verb().init_with_stem(stem = "toke"
+                                ) + VerbSuffixShuushikei()
+    print Verb().init_with_stem(stem = "tokas"
+                                ) + VerbSuffixShuushikei()
+    # initialize with Core + VerbCoreSuffix (Transitive / Intransitive)
+    print Verb().init_with_core(core = VerbCore("tok"),
+                                core_suffix = VerbCoreSuffixTransitive(s = True,
+                                                                       vowel = False)
+                                ) + VerbSuffixShuushikei()
+    print Verb().init_with_core(core = VerbCore("tok"),
+                                core_suffix = VerbCoreSuffixIntransitive(r = False,
+                                                                         vowel = True)
+                                ) + VerbSuffixShuushikei()
 
 def main():
     test()
