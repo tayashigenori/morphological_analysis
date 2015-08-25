@@ -2,6 +2,7 @@
 
 import sys
 from Define import *
+from Euphony import *
 
 # Independent: 自立語
 # Dependent: 付属語
@@ -21,6 +22,11 @@ class Independent:
             definition = self._stem + \
                          dependent._prefix[ self._suffix ] + \
                          dependent._definition
+            if dependent._stem in (u'te', u'ta'):
+                definition = euphony_t( self._stem,
+                                        dependent._prefix[ self._suffix ],
+                                        dependent._definition
+                                        )
             return IndependentCompound( definition )
         except KeyError:
             raise Exception("Unknown POS")

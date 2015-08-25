@@ -2,6 +2,7 @@
 
 import sys
 from Define import *
+from Euphony import *
 
 # Independent: 自立語
 # Dependent: 付属語
@@ -12,6 +13,8 @@ DEPENDENTS_PREFIXES = {
     u"ase-ru": {SUFFIX_VV: u"s", SUFFIX_VC: u"",},
     u"are-ru": {SUFFIX_VV: u"r", SUFFIX_VC: u"",},
     u"mas-u":  {SUFFIX_VV: u"",  SUFFIX_VC: u"i",},
+    u"ta-":    {SUFFIX_VV: u"",  SUFFIX_VC: u"y", #
+                SUFFIX_ADJ: u"kat", SUFFIX_NOUN: "dat"},
     }
 
 class Dependent:
@@ -22,7 +25,7 @@ class Dependent:
         try:
             self._prefix = DEPENDENTS_PREFIXES[ definition ]
         except KeyError:
-            self._prefix = ""
+            raise Exception("Unknown dependent")
         self._surface = definition.replace( SEP_STEM, u"" )
         (self._stem, self._suffix) = definition.split( SEP_STEM )
         return
@@ -33,6 +36,11 @@ class Dependent:
             definition = self._stem + \
                          dependent._prefix[ self._suffix ] + \
                          dependent._definition
+            if dependent._stem in (u'te', u'ta'):
+                definition = euphony_t( self._stem,
+                                        dependent._prefix[ self._suffix ],
+                                        dependent._definition
+                                        )
             return DependentCompound( self._prefix, definition )
         except KeyError:
             raise Exception("Unknown POS")

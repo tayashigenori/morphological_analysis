@@ -20,15 +20,3 @@ STEM_VC_ENDINGNS = [
     u"r",
     u"w",
 ]
-
-TE_FORMS = {
-    u"kt": u"it", u"gt": u"id",
-    u"st": u"sit",
-    u"tt": u"tt", # same
-    u"nt": u"nd",
-    u"bt": u"nd",
-    u"mt": u"nd",
-    u"rt": u"tt",
-    u"wt": u"tt",
-}
-
